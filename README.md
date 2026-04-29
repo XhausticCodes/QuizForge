@@ -115,6 +115,68 @@ If your installation path is different, update it in `extractor.py`.
 - `saved_quizzes` -> stores generated quiz JSON + score
 - `saved_flashcards` -> stores generated flashcard JSON
 
+## ER Diagram
+
+```mermaid
+erDiagram
+    USERS ||--o{ SAVED_QUIZZES : "creates"
+    USERS ||--o{ SAVED_FLASHCARDS : "creates"
+
+    USERS {
+        int id PK
+        string name
+        string email "UNIQUE"
+        string password "hashed"
+        string created_at
+    }
+
+    SAVED_QUIZZES {
+        int id PK
+        int user_id FK
+        string title
+        string questions "JSON (TEXT)"
+        string score "TEXT / NULL"
+        string created_at
+    }
+
+    SAVED_FLASHCARDS {
+        int id PK
+        int user_id FK
+        string title
+        string cards "JSON (TEXT)"
+        string created_at
+    }
+```
+
+## DFD (Level 1)
+
+```mermaid
+flowchart LR
+    U[User] -->|Register/Login| F[Flask Web App]
+    F -->|Session (user_id)| U
+
+    U -->|Upload file + mode (quiz/flash)| F
+    F -->|Save temporarily| UP[Uploads folder]
+    UP -->|Extract text| EX[Text Extractor]
+    EX -->|Clean text| G[AI Generator]
+    G -->|Prompt + context| GROQ[Groq API / LLM]
+    GROQ -->|JSON output| G
+
+    G -->|Quiz data| DB[SQLite Database]
+    G -->|Flashcard data| DB
+    F -->|Render quiz/flashcards| UI[Quiz / Flashcard Pages]
+
+    UI -->|Submit answers| F
+    F -->|Update score| DB
+
+    U -->|View History| F
+    F -->|Read generated items| DB
+    F -->|Show history| UIH[History Page]
+
+    U -->|Delete quiz/flashcards| F
+    F -->|Delete from tables| DB
+```
+
 ## Security (Current + Improvements)
 
 Current:
